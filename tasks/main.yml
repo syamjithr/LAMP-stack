@@ -1,0 +1,96 @@
+---
+- name: "Install LAMP Packages"
+  apt: name={{ item }} update_cache=yes state=latest
+  loop: [ 'apache2', 'mysql-server', 'python3-pymysql', 'php', 'php-mysql', 'libapache2-mod-php' ]
+  notify:
+    - restart-apache
+
+- name: "Install PHP Extensions"
+  apt: name={{ item }} update_cache=yes state=latest
+  loop: "{{ php_modules }}"
+
+- name: "creating documentroot"
+  file:
+    path: "/var/www/{{ httpd_domain }}"
+    state: directory
+    owner: "{{ httpd_owner }}"
+    group: "{{ httpd_group }}"
+    mode: '0755'
+  notify:
+    - restart-apache
+
+- name: "Copying website content"
+  copy:
+    src: "{{ item }}"
+    dest: "/var/www/{{ httpd_domain }}"
+  with_items:
+    - test.html
+    - test.php
+  notify:
+    - restart-apache
+
+- name: "copying virtual host"
+  template:
+    src: testconf.conf.tmpl
+    dest: "/etc/apache2/sites-available/{{ httpd_domain }}.conf"
+  notify:
+    - restart-apache
+
+
+- name: "Enable new site"
+  shell: /usr/sbin/a2ensite {{ httpd_domain }}.conf
+  notify:
+    - restart-apache
+
+- name: "Disable default Apache site"
+  shell: /usr/sbin/a2dissite 000-default.conf
+  notify:
+    - restart-apache
+
+- name: "UFW - Allow HTTP on port { httpd_port }}"
+  ufw:
+    rule: allow
+    port: "{{ httpd_port }}"
+    proto: tcp
+  notify:
+  - restart-apache
+
+- name: "mysql-server - Reset root password"
+  ignore_errors: true
+  mysql_user:
+    name: root
+    password: "{{ mysql_root }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    host_all: true
+
+- name: "mysql-server - Removing anonymous users"
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root }}"
+
+- name: "mysql-server - Creating extra Database"
+  mysql_db:
+    login_user: "root"
+    login_password: "{{ mysql_root }}"
+    name: "{{ mysql_database }}"
+    state: present
+
+- name: "mysql-server - Creating extra user"
+  mysql_user:
+    login_user: "root"
+    login_password: "{{ mysql_root }}"
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_password }}"
+    state: present
+    priv: "{{ mysql_database }}.*:ALL"
+
+- name: "Mysql-server - restart/Enable"
+  service:
+    name: mysql.service
+    state: restarted
+    enabled: true
+
+

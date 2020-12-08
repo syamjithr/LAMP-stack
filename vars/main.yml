@@ -1,0 +1,18 @@
+---
+
+# php modules
+ 
+php_modules: [ 'php-curl', 'php-gd', 'php-mbstring', 'php-xml', 'php-xmlrpc', 'php-soap', 'php-intl', 'php-zip' ]
+
+# apache variables
+
+httpd_owner: "www-data"
+httpd_group: "www-data"
+httpd_port: "80"
+httpd_domain: "www.linuxkernal.com"
+
+# mysql-server variables
+mysql_root: "myroot123"
+mysql_user: "wpuser"
+mysql_password: "wpuser123"
+mysql_database: "wordpress"
