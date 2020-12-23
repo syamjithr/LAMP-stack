@@ -11,7 +11,7 @@ This ansible role will install lamp stack on ubuntu server
  - Removing Removing anonymous users.
  - Creating additional database and user for the wordpress project.
 
-# Features
+## Features
 
 - Fully configurable and compatible with AWS
 - Can be used to create a standalone LAMP stack or deploy applications over the current LAMP stack
